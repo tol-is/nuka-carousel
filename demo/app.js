@@ -2,12 +2,27 @@ import Carousel from '../src/index';
 import React from 'react';
 import ReactDom from 'react-dom';
 
+function debounce(a,b,c){var d;return function(){var e=this,f=arguments;clearTimeout(d),d=setTimeout(function(){d=null,c||a.apply(e,f)},b),c&&!d&&a.apply(e,f)}}
+
+function isViewportPortrait() {
+  const w = window;
+  const d = document;
+  const { documentElement } = d;
+  const { body } = document;
+
+  const vw = documentElement.clientWidth || w.innerWidth || body.clientWidth;
+  const vh = documentElement.clientHeight || w.innerHeight || body.clientHeight;
+  return  vw < vh;
+}
+
 const colors = ['7732bb', '047cc0', '00884b', 'e3bc13', 'db7c00', 'aa231f'];
 
 class App extends React.Component {
+
   constructor() {
     super(...arguments);
     this.state = {
+      isPortrait: isViewportPortrait(),
       slideIndex: 0,
       length: 6,
       wrapAround: false,
@@ -24,10 +39,38 @@ class App extends React.Component {
     this.setState({ underlineHeader: !this.state.underlineHeader });
   }
 
+  componentDidMount() {
+    this.onResize = this.onResize.bind(this);
+    this.debouncedResize = debounce(this.onResize, 300);
+    window.addEventListener('resize', this.debouncedResize, false);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if(prevState.isPortrait !== this.state.isPortrait) {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 10);
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.debouncedResize, false);
+  }
+
+  onResize() {
+    const isPortrait = isViewportPortrait();
+    this.setState({isPortrait});
+  }
+
   render() {
+    const { isPortrait } = this.state;
+    const slideSize = isPortrait ? '300x450' : '450x300';
+    const carouselVertical = !isPortrait;
+
     return (
       <div style={{ width: '50%', margin: 'auto' }}>
         <Carousel
+          vertical={carouselVertical}
           transitionMode={this.state.transitionMode}
           cellAlign={this.state.cellAlign}
           slidesToShow={this.state.slidesToShow}
@@ -51,7 +94,7 @@ class App extends React.Component {
             .slice(0, this.state.length)
             .map((color, index) => (
               <img
-                src={`http://placehold.it/1000x400/${color}/ffffff/&text=slide${index +
+                src={`http://placehold.it/${slideSize}/${color}/ffffff/&text=slide${index +
                   1}`}
                 key={color}
                 onClick={this.handleImageClick}
