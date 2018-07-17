@@ -89,8 +89,6 @@ export default class ScrollTransition extends React.Component {
       listStyleType: 'none',
       verticalAlign: 'top',
       width: this.props.vertical ? '100%' : this.props.slideWidth,
-      height: 'auto',
-      minHeight: '100%',
       boxSizing: 'border-box',
       MozBoxSizing: 'border-box',
       marginLeft: this.props.vertical ? 'auto' : this.props.cellSpacing / 2,

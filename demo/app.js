@@ -12,7 +12,7 @@ function isViewportPortrait() {
 
   const vw = documentElement.clientWidth || w.innerWidth || body.clientWidth;
   const vh = documentElement.clientHeight || w.innerHeight || body.clientHeight;
-  return  vw < vh;
+  return  { vw, vh };
 }
 
 const colors = ['7732bb', '047cc0', '00884b', 'e3bc13', 'db7c00', 'aa231f'];
@@ -21,50 +21,54 @@ class App extends React.Component {
 
   constructor() {
     super(...arguments);
+
+    const { vw, vh } = isViewportPortrait();
+
     this.state = {
-      isPortrait: isViewportPortrait(),
+      vw, vh,
+      isPortrait : vw < vh,
       slideIndex: 0,
       length: 6,
       wrapAround: false,
-      underlineHeader: false,
       slidesToShow: 1.0,
       cellAlign: 'left',
       transitionMode: 'scroll'
     };
 
-    this.handleImageClick = this.handleImageClick.bind(this);
-  }
-
-  handleImageClick() {
-    this.setState({ underlineHeader: !this.state.underlineHeader });
   }
 
   componentDidMount() {
     this.onResize = this.onResize.bind(this);
-    this.debouncedResize = debounce(this.onResize, 300);
-    window.addEventListener('resize', this.debouncedResize, false);
+    // this.debouncedResize = debounce(this.onResize, 300);
+    window.addEventListener('resize', this.onResize, false);
   }
 
   componentDidUpdate(prevProps, prevState) {
     if(prevState.isPortrait !== this.state.isPortrait) {
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
-      }, 10);
+      }, 300);
     }
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.debouncedResize, false);
+    window.removeEventListener('resize', this.onResize, false);
   }
 
   onResize() {
-    const isPortrait = isViewportPortrait();
-    this.setState({isPortrait});
+    const { vw, vh } = isViewportPortrait();
+    this.setState({
+      vw, vh,
+      isPortrait : vw < vh
+    });
   }
 
   render() {
     const { isPortrait } = this.state;
-    const slideSize = isPortrait ? '300x450' : '450x300';
+
+    const slideWidth = isPortrait ? 300 : 450;
+    const slideHeight = isPortrait ? 450 : 300;
+    const imgSize = `${slideWidth}x${slideHeight}`;
     const carouselVertical = !isPortrait;
 
     return (
@@ -80,10 +84,7 @@ class App extends React.Component {
             <div
               style={{
                 fontFamily: 'Helvetica',
-                color: '#fff',
-                textDecoration: this.state.underlineHeader
-                  ? 'underline'
-                  : 'none'
+                color: '#fff'
               }}
             >
               Nuka Carousel: Slide {currentSlide + 1}
@@ -94,10 +95,9 @@ class App extends React.Component {
             .slice(0, this.state.length)
             .map((color, index) => (
               <img
-                src={`http://placehold.it/${slideSize}/${color}/ffffff/&text=slide${index +
+                src={`http://placehold.it/${imgSize}/${color}/ffffff/&text=slide${index +
                   1}`}
                 key={color}
-                onClick={this.handleImageClick}
               />
             ))}
         </Carousel>
